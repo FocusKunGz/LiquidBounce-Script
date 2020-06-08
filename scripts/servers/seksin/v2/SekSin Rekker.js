@@ -273,7 +273,7 @@ script.registerModule({
 script.registerModule({
     name: "KillSuits",
     category: "Misc",
-    description: "KillSuits | By The Moss (crave#6948)"
+    description: "KillSuits | By The Moss (crave#6948) & Modify by 1337quip (wasd#9800§")"
 }, function (module) {
     module.on("enable", function () {
         loadKillSuits();
