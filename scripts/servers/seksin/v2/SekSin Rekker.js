@@ -287,7 +287,7 @@ function readFile(filePath) {
     } catch (err) {
         Chat.print("§8§l§m+---------------------------------------------+");
         Chat.print("");
-        Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lUnable to open file " + args[1] + "§c§l!");
+        Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lUnable to open file!");
         Chat.print("");
         Chat.print("§8§l§m+---------------------------------------------+");
         throw err;
