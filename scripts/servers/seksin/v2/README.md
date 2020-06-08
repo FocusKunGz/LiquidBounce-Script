@@ -1,7 +1,7 @@
 # LiquidBounce Script by 1337quip
-If you apply it for improvement, please give me credit
+This is script for LiquidBounce b72 and up
 <br/>
-ถ้าเอาไปทำใหม่หรือดัดแปลง กรุณาให้ Credit ผมด้วย
+นี่คือ Script ของ LiquidBounce B72 ขึ้นไปนะครับ
 <br/>
 <br/>
 Youtube: https://www.youtube.com/channel/UCOKOf0UzpTKoNGboZ7rZNsw
