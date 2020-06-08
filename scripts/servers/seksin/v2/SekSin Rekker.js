@@ -1,6 +1,6 @@
 var script = registerScript({
     name: "SekSin Rekker",
-    version: "2.0",
+    version: "3.0",
     authors: ["1337quip"]
 });
 
@@ -56,7 +56,7 @@ function strafe(speed) {
 script.registerModule({
     name: "SekSinLongJump",
     category: "Misc",
-    description: "LongJump for Mc-SekSin.net | By 1337quip (wasd#9800) & The Moss",
+    description: "LongJump for Mc-SekSin.net | By 1337quip (wasd#9800) & The Moss (crave#6948)",
     settings: {
         newLongJump: Setting.boolean({
             name: "New",
@@ -113,7 +113,7 @@ script.registerModule({
         Chat.print("§8§l[§9§lLiquidBounce§8§l] §a§lPress Jump for Make sinxao Crying!! lmao");
         Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lNot Recommended for Heavy use");
         Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lIf LongJump doesn't work well, please disable AutoJump");
-        Chat.print("§8§l[§9§lLiquidBounce§8§l] §f§lLongJump for Mc-SekSin.net | By §a§l1337quip §f§l(§a§lwasd#9800§f§l) & §a§lThe Moss");
+        Chat.print("§8§l[§9§lLiquidBounce§8§l] §f§lLongJump for Mc-SekSin.net | By §a§l1337quip §f§l(§a§lwasd#9800§f§l) & §a§lThe Moss §f§l(§a§lcrave#6948§f§l)");
         Chat.print("");
         Chat.print("§8§l§m+---------------------------------------------+");
     });
@@ -178,3 +178,118 @@ script.registerModule({
         Chat.print("§8§l§m+---------------------------------------------+");
     });
 });
+
+script.registerModule({
+    name: "KillSuits",
+    category: "Misc",
+    description: "KillSuits | By The Moss (crave#6948)"
+}, function (module) {
+    module.on("update", function () {
+
+    });
+    module.on("enable", function () {
+        if (textlist == null) {
+            Chat.print("§8§l§m+---------------------------------------------+");
+            Chat.print("");
+            Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lPlease set path! by .killsuits");
+            Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lYour path must not contain spaces!");
+            Chat.print("");
+            Chat.print("§8§l§m+---------------------------------------------+");
+        }
+        Chat.print("§8§l§m+---------------------------------------------+");
+        Chat.print("");
+        Chat.print("§8§l[§9§lLiquidBounce§8§l] §f§lKillSuits | By §a§lThe Moss §f§l(§a§lcrave#6948§f§l) & Modify by §a§l1337quip §f§l(§a§lwasd#9800§f§l");
+        Chat.print("");
+        Chat.print("§8§l§m+---------------------------------------------+");
+    });
+
+    module.on("packet", function (event) {
+        var packet = event.getPacket();
+        if (packet instanceof S02PacketChat && textlist != null) {
+            var s02 = packet;
+            var message = s02.getChatComponent().getUnformattedText();
+            if (message.toLowerCase().indexOf("has been killed by " + mc.thePlayer.getName().toLowerCase() + "!") != -1 ||
+                message.toLowerCase().indexOf("weapon could not stand against " + mc.thePlayer.getName().toLowerCase() + "!") != -1 ||
+                message.toLowerCase().indexOf("was brutally murdered by " + mc.thePlayer.getName().toLowerCase() + "!") != -1 ||
+                message.toLowerCase().indexOf(mc.thePlayer.getName().toLowerCase() + " could not resist killing") != -1 ||
+                message.toLowerCase().indexOf(mc.thePlayer.getName().toLowerCase() + " gave a helping hand in ") != -1) {
+                var message1 = "";
+                var split = message.split(" ");
+                if (message.toLowerCase().indexOf(mc.thePlayer.getName().toLowerCase() + " gave a helping hand in ") != -1) {
+                    message1 = split[split.length - 2];
+                    sendL(message1);
+                } else if (message.toLowerCase().indexOf(mc.thePlayer.getName().toLowerCase() + " could not resist killing") != -1) {
+                    message1 = split[split.length - 1];
+                    sendL(message1);
+                } else if (message.toLowerCase().indexOf("weapon could not stand against " + mc.thePlayer.getName().toLowerCase() + "!") != -1) {
+                    message1 = split[1];
+                    sendL(message1);
+                } else if (message.toLowerCase().indexOf("has been killed by " + mc.thePlayer.getName().toLowerCase() + "!") != -1) {
+                    message1 = split[1];
+                    sendL(message1);
+                } else if (message.toLowerCase().indexOf("was brutally murdered by " + mc.thePlayer.getName().toLowerCase() + "!") != -1) {
+                    message1 = split[1];
+                    sendL(message1);
+                }
+            }
+        }
+    });
+});
+
+script.registerCommand({
+    name: "killsuits",
+    aliases: ["ks", "ksuits", "kills"]
+}, function (command) {
+    command.on("execute", function (args) {
+        if (args.length > 1) {
+            Chat.print("§8§l§m+---------------------------------------------+");
+            Chat.print("");
+            Chat.print("§8§l[§9§lLiquidBounce§8§l] §f§lPathed to §a§l" + args[1]);
+            Chat.print("");
+            Chat.print("§8§l§m+---------------------------------------------+");
+            Chat.print("");
+            textlist = readFile(args[1]);
+        } else {
+            Chat.print("§8§l§m+---------------------------------------------+");
+            Chat.print("");
+            Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lSyntax Error: .killsuits <your path Ex: C:\Users\quip\Desktop\KillSuits.txt");
+            Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lYour path must not contain spaces!");
+            Chat.print("");
+            Chat.print("§8§l§m+---------------------------------------------+");
+        }
+    });
+});
+
+function sendL(message) {
+    var message1 = textlist[random(0, textlist.length)].replace("%player%", message);
+    mc.thePlayer.sendChatMessage(message1);
+};
+
+function random(min, max) {
+    if (max <= min) {
+        return min;
+    }
+    return Math.floor((Math.random() * (max - min)) + min);
+}
+
+function readFile(filePath) {
+    try {
+        var file = new File(filePath);
+        var reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF8"));
+        var content = [];
+        var line;
+
+        while ((line = reader.readLine()) != null) {
+            content.push(line);
+        }
+
+        return content;
+    } catch (err) {
+        Chat.print("§8§l§m+---------------------------------------------+");
+        Chat.print("");
+        Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lUnable to open file " + args[1] + "§c§l!");
+        Chat.print("");
+        Chat.print("§8§l§m+---------------------------------------------+");
+        throw err;
+    }
+}
