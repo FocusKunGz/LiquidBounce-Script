@@ -1,11 +1,12 @@
 var script = registerScript({
     name: "SekSin Rekker",
-    version: "3.0",
+    version: "4.0",
     authors: ["1337quip"]
 });
 
-var movementUtils = Java.type("net.ccbluex.liquidbounce.utils.MovementUtils");
+var MovementUtils = Java.type("net.ccbluex.liquidbounce.utils.MovementUtils");
 var S02PacketChat = Java.type("net.minecraft.network.play.server.S02PacketChat");
+var C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
 var boosted = false;
 var textlist = null;
 var File = Java.type("java.io.File");
@@ -13,6 +14,7 @@ var FileReader = Java.type("java.io.FileReader");
 var BufferedReader = Java.type("java.io.BufferedReader");
 var FileInputStream = Java.type("java.io.FileInputStream");
 var InputStreamReader = Java.type("java.io.InputStreamReader");
+var PrintWriter = Java.type("java.io.PrintWriter");
 
 function strafe(speed) {
     var a = mc.thePlayer.rotationYaw * 0.017453292;
@@ -58,31 +60,91 @@ script.registerModule({
     category: "Misc",
     description: "LongJump for Mc-SekSin.net | By 1337quip (wasd#9800) & The Moss (crave#6948)",
     settings: {
-        newLongJump: Setting.boolean({
-            name: "New",
-            default: true
+        longJumpMode: Setting.list({
+            name: "Mode",
+            default: "New",
+            values: ["New", "Old"]
         }),
         autoJump: Setting.boolean({
             name: "AutoJump",
             default: false
+        }),
+        keepSprint: Setting.boolean({
+            name: "KeepSprint",
+            default: false
+        }),
+        sendPacket: Setting.boolean({
+            name: "SendPacket",
+            default: true
+        }),
+        newBoost: Setting.boolean({
+            name: "New-Boost",
+            default: true
+        }),
+        newBoostSpeedSetting: Setting.float({
+            name: "New-Boost-Speed",
+            min: 0.3,
+            max: 1.0,
+            default: 0.6
+        }),
+        newMotionYSetting: Setting.float({
+            name: "New-MotionY",
+            min: 0.030,
+            max: 0.050,
+            default: 0.042
+        }),
+        newSpeedSetting: Setting.float({
+            name: "New-Speed",
+            min: 0.3,
+            max: 1.0,
+            default: 0.75
+        }),
+        newTimerSetting: Setting.float({
+            name: "New-Timer",
+            min: 0.3,
+            max: 0.8,
+            default: 0.5
+        }),
+
+        oldMotionYSetting: Setting.float({
+            name: "Old-MotionY",
+            min: 0.030,
+            max: 0.050,
+            default: 0.045
+        }),
+        oldSpeedSetting: Setting.float({
+            name: "Old-Speed",
+            min: 0.01,
+            max: 0.1,
+            default: 0.05
+        }),
+        oldTimerSetting: Setting.float({
+            name: "Old-Timer",
+            min: 0.3,
+            max: 0.8,
+            default: 0.4
         })
     }
 }, function (module) {
     module.on("update", function () {
-        if (module.settings.newLongJump.get())
-            module.tag = "New";
-        else
-            module.tag = "Old";
+        module.tag = module.settings.longJumpMode.get();
 
-        if (module.settings.newLongJump.get()) {
+        if (module.settings.longJumpMode.get() == "New") {
             if (!mc.thePlayer.onGround) {
-                mc.thePlayer.motionY += 0.042;
-                var speed = 0.75;
-                var timer = 0.5;
-                if (boosted) {
-                    speed = 0.6;
-                    timer = 1.0;
-                    boosted = false;
+                if (!module.settings.keepSprint.get())
+                    mc.gameSettings.keyBindSprint.pressed = false;
+                mc.thePlayer.motionY += module.settings.newMotionYSetting.get();
+                if (!module.settings.sendPacket.get())
+                    mc.thePlayer.sendQueue.addToSendQueue(new C03PacketPlayer(true));
+                mc.gameSettings.keyBindSprint.pressed = false;
+                var speed = module.settings.newSpeedSetting.get();
+                var timer = module.settings.newTimerSetting.get();
+                if (module.settings.newBoost.get()) {
+                    if (boosted) {
+                        speed = module.settings.newBoostSpeedSetting.get();
+                        timer = 1.0;
+                        boosted = false;
+                    }
                 }
                 var yaw = mc.thePlayer.rotationYaw * 0.017453292;
                 mc.thePlayer.motionX = -Math.sin(yaw) * speed;
@@ -92,15 +154,19 @@ script.registerModule({
                 mc.timer.timerSpeed = 1.0;
             }
         }
-        if (module.settings.autoJump.get() && mc.thePlayer.onGround && movementUtils.isMoving())
+        if (module.settings.autoJump.get() && mc.thePlayer.onGround && MovementUtils.isMoving())
             mc.thePlayer.jump();
     });
     module.on("move", function (event) {
-        if (!module.settings.newLongJump.get()) {
+        if (module.settings.longJumpMode.get() == "Old") {
             if (!mc.thePlayer.onGround) {
-                mc.thePlayer.motionY += 0.045;
-                strafe(0.05);
-                mc.timer.timerSpeed = 0.4;
+                if (!module.settings.keepSprint.get())
+                    mc.gameSettings.keyBindSprint.pressed = false;
+                mc.thePlayer.motionY += module.settings.oldMotionYSetting.get();
+                if (!module.settings.sendPacket.get())
+                    mc.thePlayer.sendQueue.addToSendQueue(new C03PacketPlayer(true));
+                strafe(module.settings.oldSpeedSetting.get());
+                mc.timer.timerSpeed = module.settings.oldTimerSetting.get();
             } else {
                 mc.timer.timerSpeed = 1.0;
             }
@@ -125,25 +191,50 @@ script.registerModule({
 script.registerModule({
     name: "SekSinSpeed",
     category: "Misc",
-    description: "Speed for Mc-SekSin.net | By 1337quip (wasd#9800)"
+    description: "Speed for Mc-SekSin.net | By 1337quip (wasd#9800)",
+    settings: {
+        speedMode: Setting.list({
+            name: "Mode",
+            default: "New",
+            values: ["New", "Old"]
+        })
+    }
 }, function (module) {
     module.on("update", function () {
-        if (!movementUtils.isMoving())
-            return;
-        if (mc.thePlayer.onGround) {
-            mc.gameSettings.keyBindJump.pressed = false;
-            mc.thePlayer.jump();
-        }
-        if (!mc.thePlayer.onGround && mc.thePlayer.fallDistance <= 0.1) {
-            mc.thePlayer.speedInAir = 0.02;
-            mc.timer.timerSpeed = 1.5;
-        }
-        if (mc.thePlayer.fallDistance > 0.1 && mc.thePlayer.fallDistance < 1.3) {
-            mc.timer.timerSpeed = 0.7;
-        }
-        if (mc.thePlayer.fallDistance >= 1.3) {
-            mc.timer.timerSpeed = 1;
-            mc.thePlayer.speedInAir = 0.02;
+        module.tag = module.settings.speedMode.get();
+        switch (module.settings.speedMode.get()) {
+            case "Old":
+                if (!MovementUtils.isMoving())
+                    return;
+                if (mc.thePlayer.onGround) {
+                    mc.gameSettings.keyBindJump.pressed = false;
+                    mc.thePlayer.jump();
+                }
+                if (!mc.thePlayer.onGround && mc.thePlayer.fallDistance <= 0.1) {
+                    mc.thePlayer.speedInAir = 0.02;
+                    mc.timer.timerSpeed = 1.5;
+                }
+                if (mc.thePlayer.fallDistance > 0.1 && mc.thePlayer.fallDistance < 1.3) {
+                    mc.timer.timerSpeed = 0.7;
+                }
+                if (mc.thePlayer.fallDistance >= 1.3) {
+                    mc.timer.timerSpeed = 1;
+                    mc.thePlayer.speedInAir = 0.02;
+                }
+                break;
+            case "New":
+                if (!MovementUtils.isMoving())
+                    return;
+                if (mc.thePlayer.onGround) {
+                    mc.thePlayer.jump();
+                    mc.thePlayer.speedInAir = 0.0201;
+                    mc.timer.timerSpeed = 0.94;
+                }
+                if (mc.thePlayer.fallDistance > 0.7 && mc.thePlayer.fallDistance < 1.3) {
+                    mc.thePlayer.speedInAir = 0.02;
+                    mc.timer.timerSpeed = 1.8;
+                }
+                break;
         }
     });
     module.on("enable", function () {
@@ -184,17 +275,16 @@ script.registerModule({
     category: "Misc",
     description: "KillSuits | By The Moss (crave#6948)"
 }, function (module) {
-    module.on("update", function () {
-
-    });
     module.on("enable", function () {
-        if (textlist == null) {
+        loadKillSuits();
+        if (fuckyou == null) {
             Chat.print("§8§l§m+---------------------------------------------+");
             Chat.print("");
-            Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lPlease set path! by .killsuits");
+            Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lPlease set path! by .killsuits <path>");
             Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lYour path must not contain spaces!");
             Chat.print("");
             Chat.print("§8§l§m+---------------------------------------------+");
+            return;
         }
         Chat.print("§8§l§m+---------------------------------------------+");
         Chat.print("");
@@ -236,6 +326,8 @@ script.registerModule({
     });
 });
 
+var fuckyou = null;
+
 script.registerCommand({
     name: "killsuits",
     aliases: ["ks", "ksuits", "kills"]
@@ -245,20 +337,53 @@ script.registerCommand({
             Chat.print("§8§l§m+---------------------------------------------+");
             Chat.print("");
             Chat.print("§8§l[§9§lLiquidBounce§8§l] §f§lPathed to §a§l" + args[1]);
+            Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lPlease re-enable this module every time when starting the LiquidBounce");
             Chat.print("");
             Chat.print("§8§l§m+---------------------------------------------+");
             Chat.print("");
-            textlist = readFile(args[1]);
+            fuckyou = args[1];
+            textlist = readFile(fuckyou);
+            saveKillSuits();
         } else {
             Chat.print("§8§l§m+---------------------------------------------+");
             Chat.print("");
-            Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lSyntax Error: .killsuits <your path Ex: C:\Users\quip\Desktop\KillSuits.txt");
+            Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lSyntax Error: .killsuits <path>");
             Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lYour path must not contain spaces!");
             Chat.print("");
             Chat.print("§8§l§m+---------------------------------------------+");
         }
     });
 });
+
+function saveKillSuits() {
+    f = new File(mc.mcDataDir + "/LiquidBounce-1.8/KillSuitsPath.txt");
+    try {
+        if (!f.exists()) {
+            f.createNewFile();
+        }
+        pw = new PrintWriter(f);
+        pw.print(fuckyou);
+        pw.close();
+    } catch (Exception) {
+    }
+}
+
+function loadKillSuits() {
+    f = new File(mc.mcDataDir + "/LiquidBounce-1.8/KillSuitsPath.txt");
+    if (!f.exists()) {
+        f.createNewFile();
+    } else {
+        var br = new BufferedReader(new FileReader(f));
+        var line;
+        while ((line = br.readLine()) != null) {
+            try {
+                fuckyou = line;
+                textlist = readFile(fuckyou);
+            } catch (Exception) {
+            }
+        }
+    }
+}
 
 function sendL(message) {
     var message1 = textlist[random(0, textlist.length)].replace("%player%", message);
