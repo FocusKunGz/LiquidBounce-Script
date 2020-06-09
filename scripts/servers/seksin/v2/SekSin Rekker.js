@@ -70,7 +70,15 @@ script.registerModule({
         }),
         sendPacket: Setting.boolean({
             name: "SendPacket",
-            default: true
+            default: false
+        }),
+        lagSpoofonGround: Setting.boolean({
+            name: "LagSpoofonGround",
+            default: false
+        }),
+        keepNoFallEnable: Setting.boolean({
+            name: "KeepNoFallEnable",
+            default: false
         }),
         newBoost: Setting.boolean({
             name: "New-Boost",
@@ -149,6 +157,12 @@ script.registerModule({
                 mc.timer.timerSpeed = 1.0;
             }
         }
+        if (module.settings.lagSpoofonGround.get()) {
+            var SekSinNoFallModule = moduleManager.getModule("SekSinNoFall");
+            if (!SekSinNoFallModule.getState()) {
+                SekSinNoFallModule.setState(true);
+            }
+        }
         if (module.settings.autoJump.get() && mc.thePlayer.onGround && MovementUtils.isMoving())
             mc.thePlayer.jump();
     });
@@ -180,6 +194,14 @@ script.registerModule({
     });
     module.on("disable", function () {
         mc.timer.timerSpeed = 1.0;
+        if (module.settings.lagSpoofonGround.get()) {
+            if (!module.settings.keepNoFallEnable.get()) {
+                var SekSinNoFallModule = moduleManager.getModule("SekSinNoFall");
+                if (SekSinNoFallModule.getState()) {
+                    SekSinNoFallModule.setState(false);
+                }
+            }
+        }
     });
 });
 
@@ -255,9 +277,11 @@ script.registerModule({
     description: "Velocity for Mc-SekSin.net | By 1337quip (wasd#9800)"
 }, function (module) {
     module.on("update", function () {
-        if (mc.thePlayer.hurtTime > 0 && mc.thePlayer.hurtTime <= 6) {
-            mc.thePlayer.motionX *= 0.6;
-            mc.thePlayer.motionZ *= 0.6;
+        if (!isVoid) {
+            if (mc.thePlayer.hurtTime > 0 && mc.thePlayer.hurtTime <= 6) {
+                mc.thePlayer.motionX *= 0.6;
+                mc.thePlayer.motionZ *= 0.6;
+            }
         }
     });
     module.on("enable", function () {
@@ -283,7 +307,7 @@ var PrintWriter = Java.type("java.io.PrintWriter");
 script.registerModule({
     name: "KillSuits",
     category: "Fun",
-    description: "KillSuits | By The Moss (crave#6948) & Modify by 1337quip (wasd#9800§",
+    description: "KillSuits for Mc-SekSin.net | By The Moss (crave#6948) & Modify by 1337quip (wasd#9800)",
 }, function (module) {
     module.on("enable", function () {
         if (fuckyou == null) {
@@ -297,7 +321,7 @@ script.registerModule({
         }
         Chat.print("§8§l§m+---------------------------------------------+");
         Chat.print("");
-        Chat.print("§8§l[§9§lLiquidBounce§8§l] §f§lKillSuits | By §a§lThe Moss §f§l(§a§lcrave#6948§f§l) & Modify by §a§l1337quip §f§l(§a§lwasd#9800§f§l");
+        Chat.print("§8§l[§9§lLiquidBounce§8§l] §f§lKillSuits for §a§lMc-SekSin.net §f§l| By §a§lThe Moss §f§l(§a§lcrave#6948§f§l) & Modify by §a§l1337quip §f§l(§a§lwasd#9800§f§l");
         Chat.print("");
         Chat.print("§8§l§m+---------------------------------------------+");
     });
@@ -524,7 +548,7 @@ script.registerModule({
 script.registerModule({
     name: "AutoClearFriend",
     category: "Fun",
-    description: "AutoClearFriend | By 1337quip (wasd#9800)"
+    description: "AutoClearFriend for Mc-SekSin.net | By 1337quip (wasd#9800)"
 }, function (module) {
     module.on("update", function () {
         if (mc.thePlayer.health == 0 || mc.thePlayer.isDead || mc.thePlayer.ticksExisted <= 1) {
@@ -534,7 +558,7 @@ script.registerModule({
     module.on("enable", function () {
         Chat.print("§8§l§m+---------------------------------------------+");
         Chat.print("");
-        Chat.print("§8§l[§9§lLiquidBounce§8§l] §f§lAutoClearFriend | By §a§l1337quip §f§l(§a§lwasd#9800§f§l)");
+        Chat.print("§8§l[§9§lLiquidBounce§8§l] §f§lAutoClearFriend for §a§lMc-SekSin.net §f§l| By §a§l1337quip §f§l(§a§lwasd#9800§f§l)");
         Chat.print("");
         Chat.print("§8§l§m+---------------------------------------------+");
     });
@@ -542,6 +566,205 @@ script.registerModule({
 
 //-----------------------------------------------------------------------------------------------------------
 
+var lagspoof = false;
+var modifypacket = false;
+var AxisAlignedBB = Java.type("net.minecraft.util.AxisAlignedBB");
+var packets = [];
+
+script.registerModule({
+    name: "SekSinNoFall",
+    category: "Fun",
+    description: "NoFall for Mc-SekSin.net | By The Moss (crave#6948) & Modify by 1337quip (wasd#9800§)",
+}, function (module) {
+    module.on("enable", function () {
+        lagspoof = false;
+        modifypacket = false;
+    });
+
+    module.on("motion", function (event) {
+        var state = event.getEventState();
+        if (state == "PRE") {
+            if (!isVoid()) {
+                if (lagspoof) {
+                    lagspoof = false;
+                    if (packets.length > 0) {
+                        for (var i = 0; i < packets.length; i++) {
+                            var packet = packets[i];
+                            mc.thePlayer.sendQueue.addToSendQueue(packet);
+                        }
+                        packets = [];
+                    }
+                }
+                return;
+            }
+            if (mc.thePlayer.onGround && lagspoof) {
+                lagspoof = false;
+                if (packets.length > 0) {
+                    for (var i = 0; i < packets.length; i++) {
+                        var packet = packets[i];
+                        mc.thePlayer.sendQueue.addToSendQueue(packet);
+                    }
+                    packets = [];
+                }
+                return;
+            }
+            if (mc.thePlayer.fallDistance > 3 && lagspoof) {
+                modifypacket = true;
+                mc.thePlayer.fallDistance = 0;
+            }
+            if (isAir(4.0, 1.0)) {
+                return;
+            }
+            if (!lagspoof) {
+                lagspoof = true;
+            }
+        }
+    });
+    module.on("packet", function (event) {
+        var packet = event.getPacket();
+        if (packet instanceof C03PacketPlayer && lagspoof) {
+            event.cancelEvent();
+            if (modifypacket) {
+                packet.onGround = true;
+                modifypacket = false;
+            }
+            packets.push(packet);
+        }
+    });
+    module.on("enable", function () {
+        Chat.print("§8§l§m+---------------------------------------------+");
+        Chat.print("");
+        Chat.print("§8§l[§9§lLiquidBounce§8§l] §f§lNoFall for §a§lMc-SekSin.net §f§l| By §a§lThe Moss §f§l(§a§lcrave#6948§f§l) & Modify by §a§l1337quip §f§l(§a§lwasd#9800§f§l");
+        Chat.print("");
+        Chat.print("§8§l§m+---------------------------------------------+");
+    });
+});
+
+function isVoid() {
+    if (mc.thePlayer.posY < 0) {
+        return false;
+    }
+
+    for (var off = 0; off < mc.thePlayer.posY + 2; off += 2) {
+        var bb = new AxisAlignedBB(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ, mc.thePlayer.posX, off, mc.thePlayer.posZ);
+        if (!mc.theWorld.getCollidingBoundingBoxes(mc.thePlayer, bb).isEmpty()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function isAir(height, plus) {
+    if (mc.thePlayer.posY < 0)
+        return false;
+    for (var off = 0; off < height; off += plus) {
+        var bb = new AxisAlignedBB(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ, mc.thePlayer.posX, mc.thePlayer.posY - off, mc.thePlayer.posZ);
+        if (!mc.theWorld.getCollidingBoundingBoxes(mc.thePlayer, bb).isEmpty()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------------------------------------
+
+var autoLoginPassword = null;
+
+script.registerModule({
+    name: "AutoLogin",
+    category: "Fun",
+    description: "AutoLogin for Mc-SekSin.net | by 1337quip (wasd#9800)",
+}, function (module) {
+    module.on("enable", function () {
+        if (autoLoginPassword == null) {
+            Chat.print("§8§l§m+---------------------------------------------+");
+            Chat.print("");
+            Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lPlease set password! by .autologin <password>");
+            Chat.print("");
+            Chat.print("§8§l§m+---------------------------------------------+");
+            return;
+        }
+        Chat.print("§8§l§m+---------------------------------------------+");
+        Chat.print("");
+        Chat.print("§8§l[§9§lLiquidBounce§8§l] §f§lAutoLogin for §a§lMc-SekSin.net §f§l| By §a§l1337quip §f§l(§a§lwasd#9800§f§l");
+        Chat.print("");
+        Chat.print("§8§l§m+---------------------------------------------+");
+    });
+
+    module.on("packet", function (event) {
+        var S02PacketChat = Java.type("net.minecraft.network.play.server.S02PacketChat");
+        var packet = event.getPacket();
+        if (packet instanceof S02PacketChat && textlist != null) {
+            var s02 = packet;
+            var message = s02.getChatComponent().getUnformattedText();
+            if (message.toLowerCase().indexOf("/login <password>") != -1) {
+                mc.thePlayer.sendChatMessage("/login " + autoLoginPassword);
+                Chat.print("§8§l§m+---------------------------------------------+");
+                Chat.print("");
+                Chat.print("§8§l[§9§lLiquidBounce§8§l] §a§lLogged in!");
+                Chat.print("");
+                Chat.print("§8§l§m+---------------------------------------------+");
+            }
+        }
+    });
+});
+
+script.registerCommand({
+    name: "autologin",
+    aliases: ["al", "autol", "alogin"]
+}, function (command) {
+    command.on("execute", function (args) {
+        if (args.length > 1) {
+            Chat.print("§8§l§m+---------------------------------------------+");
+            Chat.print("");
+            Chat.print("§8§l[§9§lLiquidBounce§8§l] §a§lDone!");
+            Chat.print("");
+            Chat.print("§8§l§m+---------------------------------------------+");
+            Chat.print("");
+            autoLoginPassword = args[1];
+            saveAutoLogin();
+        } else {
+            Chat.print("§8§l§m+---------------------------------------------+");
+            Chat.print("");
+            Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lSyntax Error: .autologin <password>");
+            Chat.print("");
+            Chat.print("§8§l§m+---------------------------------------------+");
+        }
+    });
+});
+
+function saveAutoLogin() {
+    f = new File(mc.mcDataDir + "/LiquidBounce-1.8/AutoLogin.txt");
+    try {
+        if (!f.exists()) {
+            f.createNewFile();
+        }
+        pw = new PrintWriter(f);
+        pw.print(autoLoginPassword);
+        pw.close();
+    } catch (Exception) {
+    }
+}
+
+function loadAutoLogin() {
+    f = new File(mc.mcDataDir + "/LiquidBounce-1.8/AutoLogin.txt");
+    if (!f.exists()) {
+        f.createNewFile();
+    } else {
+        var br = new BufferedReader(new FileReader(f));
+        var line;
+        while ((line = br.readLine()) != null) {
+            try {
+                autoLoginPassword = line;
+            } catch (Exception) {
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------------------------------------
+
 script.on("load", function () {
     loadKillSuits();
+    loadAutoLogin();
 });
