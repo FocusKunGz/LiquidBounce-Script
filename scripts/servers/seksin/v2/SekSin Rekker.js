@@ -1,20 +1,13 @@
 var script = registerScript({
     name: "SekSin Rekker",
-    version: "4.0",
+    version: "5.0",
     authors: ["1337quip"]
 });
 
 var MovementUtils = Java.type("net.ccbluex.liquidbounce.utils.MovementUtils");
-var S02PacketChat = Java.type("net.minecraft.network.play.server.S02PacketChat");
 var C03PacketPlayer = Java.type("net.minecraft.network.play.client.C03PacketPlayer");
-var boosted = false;
-var textlist = null;
-var File = Java.type("java.io.File");
-var FileReader = Java.type("java.io.FileReader");
-var BufferedReader = Java.type("java.io.BufferedReader");
-var FileInputStream = Java.type("java.io.FileInputStream");
-var InputStreamReader = Java.type("java.io.InputStreamReader");
-var PrintWriter = Java.type("java.io.PrintWriter");
+
+//-----------------------------------------------------------------------------------------------------------
 
 function strafe(speed) {
     var a = mc.thePlayer.rotationYaw * 0.017453292;
@@ -55,9 +48,11 @@ function strafe(speed) {
     }
 }
 
+var boosted = false;
+
 script.registerModule({
     name: "SekSinLongJump",
-    category: "Misc",
+    category: "Fun",
     description: "LongJump for Mc-SekSin.net | By 1337quip (wasd#9800) & The Moss (crave#6948)",
     settings: {
         longJumpMode: Setting.list({
@@ -95,8 +90,8 @@ script.registerModule({
         }),
         newSpeedSetting: Setting.float({
             name: "New-Speed",
-            min: 0.3,
-            max: 1.0,
+            min: 0.30,
+            max: 1.00,
             default: 0.75
         }),
         newTimerSetting: Setting.float({
@@ -115,7 +110,7 @@ script.registerModule({
         oldSpeedSetting: Setting.float({
             name: "Old-Speed",
             min: 0.01,
-            max: 0.1,
+            max: 0.10,
             default: 0.05
         }),
         oldTimerSetting: Setting.float({
@@ -188,22 +183,24 @@ script.registerModule({
     });
 });
 
+//-----------------------------------------------------------------------------------------------------------
+
 script.registerModule({
     name: "SekSinSpeed",
-    category: "Misc",
+    category: "Fun",
     description: "Speed for Mc-SekSin.net | By 1337quip (wasd#9800)",
     settings: {
         speedMode: Setting.list({
             name: "Mode",
-            default: "New",
-            values: ["New", "Old"]
+            default: "v1",
+            values: ["v1", "v2"]
         })
     }
 }, function (module) {
     module.on("update", function () {
         module.tag = module.settings.speedMode.get();
         switch (module.settings.speedMode.get()) {
-            case "Old":
+            case "v1":
                 if (!MovementUtils.isMoving())
                     return;
                 if (mc.thePlayer.onGround) {
@@ -222,7 +219,7 @@ script.registerModule({
                     mc.thePlayer.speedInAir = 0.02;
                 }
                 break;
-            case "New":
+            case "v2":
                 if (!MovementUtils.isMoving())
                     return;
                 if (mc.thePlayer.onGround) {
@@ -250,9 +247,11 @@ script.registerModule({
     });
 });
 
+//-----------------------------------------------------------------------------------------------------------
+
 script.registerModule({
     name: "SekSinVelocity",
-    category: "Misc",
+    category: "Fun",
     description: "Velocity for Mc-SekSin.net | By 1337quip (wasd#9800)"
 }, function (module) {
     module.on("update", function () {
@@ -270,13 +269,23 @@ script.registerModule({
     });
 });
 
+//-----------------------------------------------------------------------------------------------------------
+
+var S02PacketChat = Java.type("net.minecraft.network.play.server.S02PacketChat");
+var textlist = null;
+var File = Java.type("java.io.File");
+var FileReader = Java.type("java.io.FileReader");
+var BufferedReader = Java.type("java.io.BufferedReader");
+var FileInputStream = Java.type("java.io.FileInputStream");
+var InputStreamReader = Java.type("java.io.InputStreamReader");
+var PrintWriter = Java.type("java.io.PrintWriter");
+
 script.registerModule({
     name: "KillSuits",
-    category: "Misc",
+    category: "Fun",
     description: "KillSuits | By The Moss (crave#6948) & Modify by 1337quip (wasd#9800§",
 }, function (module) {
     module.on("enable", function () {
-        loadKillSuits();
         if (fuckyou == null) {
             Chat.print("§8§l§m+---------------------------------------------+");
             Chat.print("");
@@ -337,7 +346,6 @@ script.registerCommand({
             Chat.print("§8§l§m+---------------------------------------------+");
             Chat.print("");
             Chat.print("§8§l[§9§lLiquidBounce§8§l] §f§lPathed to §a§l" + args[1]);
-            Chat.print("§8§l[§9§lLiquidBounce§8§l] §c§lPlease re-enable this module every time when starting the LiquidBounce");
             Chat.print("");
             Chat.print("§8§l§m+---------------------------------------------+");
             Chat.print("");
@@ -418,3 +426,122 @@ function readFile(filePath) {
         throw err;
     }
 }
+
+//-----------------------------------------------------------------------------------------------------------
+
+// var EntityPlayer = Java.type("net.minecraft.entity.player.EntityPlayer");
+// var friendName = null;
+
+// script.registerModule({
+//     name: "AutoTempFriend",
+//     category: "Fun",
+//     description: "AutoTempFriend | By 1337quip (wasd#9800)",
+//     settings: {
+//         rangeSetting: Setting.float({
+//             name: "Range",
+//             min: 3.0,
+//             max: 10.0,
+//             default: 3.5
+//         })
+//     }
+// }, function (module) {
+//     module.on("packet", function (event) {
+//         var S02PacketChat = Java.type("net.minecraft.network.play.server.S02PacketChat");
+//         var packet = event.getPacket();
+//         if (packet instanceof S02PacketChat) {
+//             var s02 = packet;
+//             var message = s02.getChatComponent().getUnformattedText();
+//             if (message.toLowerCase().indexOf("skywar the game has begun!") != -1) {
+//                 for (var i = 0; i < mc.theWorld.playerEntities.size(); i++) {
+//                     var player = mc.theWorld.playerEntities.get(i);
+//                     var distance = mc.thePlayer.getDistanceToEntity(player);
+//                     if (distance <= rangeSetting.get()) {
+//                         friendName = player.getName();
+//                         commandManager.executeCommand(".friend add " + friendName);
+//                     }
+//                 }
+//             }
+//         }
+//     });
+//     module.on("enable", function () {
+//         Chat.print("§8§l§m+---------------------------------------------+");
+//         Chat.print("");
+//         Chat.print("§8§l[§9§lLiquidBounce§8§l] §f§lAutoTempFriend | By §a§l1337quip §f§l(§a§lwasd#9800§f§l)");
+//         Chat.print("");
+//         Chat.print("§8§l§m+---------------------------------------------+");
+//     });
+// });
+
+//-----------------------------------------------------------------------------------------------------------
+
+KillAuraClass = Java.type("net.ccbluex.liquidbounce.LiquidBounce").moduleManager.getModule(Java.type("net.ccbluex.liquidbounce.features.module.modules.combat.KillAura").class);
+var ItemStack = Java.type("net.minecraft.item.ItemStack");
+var itemSwitchTicks = 0;
+
+script.registerModule({
+    name: "Dura",
+    category: "Fun",
+    description: "Dura | By 1337quip (wasd#9800)"
+}, function (module) {
+    module.on("update", function () {
+        if (KillAuraClass.target != null) {
+            ++itemSwitchTicks;
+            switch (itemSwitchTicks) {
+                case 3:
+                    if (mc.thePlayer.inventoryContainer.getSlot(27).getHasStack()) {
+                        ItemStack = mc.thePlayer.inventoryContainer.getSlot(27).getStack();
+                        if (ItemStack != null) {
+                            mc.playerController.windowClick(0, 27, 0, 2, mc.thePlayer);
+                        }
+                    }
+                    break;
+                case 4:
+                    if (mc.thePlayer.inventoryContainer.getSlot(27).getHasStack()) {
+                        ItemStack = mc.thePlayer.inventoryContainer.getSlot(27).getStack();
+                        if (ItemStack != null) {
+                            mc.playerController.windowClick(0, 27, 0, 2, mc.thePlayer);
+                        }
+                    }
+                    itemSwitchTicks = 0;
+            }
+        }
+    });
+    module.on("enable", function () {
+        Chat.print("§8§l§m+---------------------------------------------+");
+        Chat.print("");
+        Chat.print("§8§l[§9§lLiquidBounce§8§l] §f§lDura | By §a§l1337quip §f§l(§a§lwasd#9800§f§l)");
+        Chat.print("");
+        Chat.print("§8§l§m+---------------------------------------------+");
+        itemSwitchTicks = 0;
+    });
+    module.on("disable", function () {
+        itemSwitchTicks = 0;
+    });
+});
+
+//-----------------------------------------------------------------------------------------------------------
+
+script.registerModule({
+    name: "AutoClearFriend",
+    category: "Fun",
+    description: "AutoClearFriend | By 1337quip (wasd#9800)"
+}, function (module) {
+    module.on("update", function () {
+        if (mc.thePlayer.health == 0 || mc.thePlayer.isDead || mc.thePlayer.ticksExisted <= 1) {
+            commandManager.executeCommand(".friend clear");
+        }
+    });
+    module.on("enable", function () {
+        Chat.print("§8§l§m+---------------------------------------------+");
+        Chat.print("");
+        Chat.print("§8§l[§9§lLiquidBounce§8§l] §f§lAutoClearFriend | By §a§l1337quip §f§l(§a§lwasd#9800§f§l)");
+        Chat.print("");
+        Chat.print("§8§l§m+---------------------------------------------+");
+    });
+});
+
+//-----------------------------------------------------------------------------------------------------------
+
+script.on("load", function () {
+    loadKillSuits();
+});
